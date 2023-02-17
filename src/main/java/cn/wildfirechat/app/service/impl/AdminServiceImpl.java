@@ -4,12 +4,18 @@ import cn.wildfirechat.app.RestResult;
 import cn.wildfirechat.app.jpa.Report;
 import cn.wildfirechat.app.jpa.ReportRepository;
 import cn.wildfirechat.app.pojo.AdminLogin;
+import cn.wildfirechat.app.pojo.BlackListStatusPojo;
 import cn.wildfirechat.app.pojo.UserGroupDel;
 import cn.wildfirechat.app.service.AdminService;
+import cn.wildfirechat.pojos.InputOutputUserInfo;
+import cn.wildfirechat.pojos.OutputUserStatus;
 import cn.wildfirechat.sdk.GroupAdmin;
 import cn.wildfirechat.sdk.RelationAdmin;
 import cn.wildfirechat.sdk.SensitiveAdmin;
 import cn.wildfirechat.sdk.UserAdmin;
+import cn.wildfirechat.sdk.model.IMResult;
+import com.qiniu.util.Json;
+import org.apache.logging.log4j.core.util.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -135,6 +141,25 @@ public class AdminServiceImpl implements AdminService {
             return RestResult.ok(GroupAdmin.getGroupMembers(id));
         }catch (Exception e){
             return RestResult.ok(new ArrayList<>());
+        }
+    }
+
+    @Override
+    public Object blacklist(BlackListStatusPojo pojo) {
+        try {
+            return RestResult.ok(RelationAdmin.setUserBlacklist(pojo.getUserId(), pojo.getTargetUid(), pojo.getStatus()));
+        } catch (Exception e) {
+            return RestResult.error(RestResult.RestCode.BLACKLIST_FAIL);
+        }
+    }
+
+    @Override
+    public Object userDestroy(String userId) {
+        try {
+            IMResult<Void> voidIMResult = UserAdmin.destroyUser(userId);
+            return RestResult.ok(voidIMResult);
+        } catch (Exception e) {
+            return RestResult.error(RestResult.RestCode.BLACKLIST_FAIL);
         }
     }
 }

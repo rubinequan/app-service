@@ -39,6 +39,7 @@ public class RestResult {
         JUBAOREN_NO_EXISTS(32, "举报人不存在"),
         BEIJUBAO_NO_EXISTS(33, "被举报人不存在"),
         DEL_FAIL(32, "删除失败"),
+        BLACKLIST_FAIL(33, "注销失败"),
         ;
         public int code;
         public String msg;

@@ -76,4 +76,14 @@ public class AdminController {
         return adminService.groupList(pojo.getId());
     }
 
+    @PostMapping(value = "/admin/blacklist", produces = "application/json;charset=UTF-8")
+    public Object blacklist(@RequestBody BlackListStatusPojo pojo) {
+        return adminService.blacklist(pojo);
+    }
+
+    @PostMapping(value = "/admin/user/destroy", produces = "application/json;charset=UTF-8")
+    public Object userDestroy(@RequestBody String userId) {
+        return adminService.userDestroy(userId);
+    }
+
 }

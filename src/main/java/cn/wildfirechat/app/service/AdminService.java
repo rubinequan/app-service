@@ -3,6 +3,7 @@ package cn.wildfirechat.app.service;
 import cn.wildfirechat.app.RestResult;
 import cn.wildfirechat.app.jpa.Report;
 import cn.wildfirechat.app.pojo.AdminLogin;
+import cn.wildfirechat.app.pojo.BlackListStatusPojo;
 import cn.wildfirechat.app.pojo.UserGroupDel;
 
 import java.util.List;
@@ -30,4 +31,8 @@ public interface AdminService {
     RestResult delGroup(UserGroupDel del);
 
     RestResult groupList(String id);
+
+    Object blacklist(BlackListStatusPojo pojo);
+
+    Object userDestroy(String userId);
 }
