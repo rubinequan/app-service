@@ -1,6 +1,6 @@
 package cn.wildfirechat.app;
 
-
+import cn.wildfirechat.app.conference.OssImgUtil;
 import cn.wildfirechat.app.jpa.*;
 import cn.wildfirechat.app.pojo.*;
 import cn.wildfirechat.app.shiro.AuthDataSource;
@@ -63,7 +63,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 import static cn.wildfirechat.app.RestResult.RestCode.*;
 import static cn.wildfirechat.app.jpa.PCSession.PCSessionStatus.*;
@@ -1201,7 +1200,9 @@ public class ServiceImpl implements Service {
     @Override
     public RestResult saveUserLogs(String userId, MultipartFile file) {
         File localFile = new File(userLogPath, userId + "_" + file.getOriginalFilename());
-
+        if(!OssImgUtil.getScene(localFile)){
+            return RestResult.error(FILE_ILLEGALTY);
+        }
         try {
             file.transferTo(localFile);
         } catch (IOException e) {

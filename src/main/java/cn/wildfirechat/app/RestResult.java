@@ -40,6 +40,7 @@ public class RestResult {
         BEIJUBAO_NO_EXISTS(33, "被举报人不存在"),
         DEL_FAIL(32, "删除失败"),
         BLACKLIST_FAIL(33, "注销失败"),
+        FILE_ILLEGALTY(34, "图片违规，或者文件违规"),
         ;
         public int code;
         public String msg;
