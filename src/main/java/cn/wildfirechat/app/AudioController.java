@@ -1,5 +1,6 @@
 package cn.wildfirechat.app;
 
+import cn.wildfirechat.app.conference.OssVoiceUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
@@ -17,6 +18,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
+
+import static cn.wildfirechat.app.RestResult.RestCode.FILE_ILLEGALTY;
 
 @RestController
 public class AudioController {
@@ -38,7 +41,14 @@ public class AudioController {
 
         MediaType mediaType = new MediaType("audio", "mp3");
         String mp3FileName = amrUrl.substring(amrUrl.lastIndexOf('/') + 1) + ".mp3";
-
+        try {
+            System.out.println("voice url:"+ amrUrl);
+            if(!OssVoiceUtils.getScene(amrUrl)){
+                throw new FileNotFoundException("语音违规");
+            }
+        }catch (Exception e){
+            System.out.println("语音异常："+e.getMessage());
+        }
         File mp3File = new File(cacheDir, mp3FileName);
         if (mp3File.exists()) {
             InputStreamResource resource = new InputStreamResource(new FileInputStream(mp3File));

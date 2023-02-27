@@ -18,12 +18,16 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
- * 校验视频是否违规，返回false 既不通过
+ * 校验直播或者视频是否违规
  */
 public class OssVideoUtil {
+
+    public static void main(String[] args) throws Exception {
+        //返回true  合法，返回fasle违规
+        System.out.println("是否违规：" + OssVideoUtil.getScene("https://www.huya.com/165149"));;
+    }
 
     public static boolean getScene(String url) throws Exception{
         IClientProfile profile = DefaultProfile.getProfile("oss-beijing", "LTAI5tN4daQRKSBMx865uP8y", "A28GboYEcZTbPjuuXLxv8lHRdZJyGG");
@@ -36,19 +40,21 @@ public class OssVideoUtil {
 
         List<Map<String, Object>> tasks = new ArrayList<Map<String, Object>>();
         Map<String, Object> task = new LinkedHashMap<String, Object>();
-        task.put("dataId", UUID.randomUUID().toString());
-        task.put("url", url);//请填写公网可访问的视频HTTP、HTTPS URL地址
+        task.put("dataId", "1");//业务ID
+        // URL填写直播流地址。
+        task.put("url", url);
 
         tasks.add(task);
         /**
-         * 设置要检测的场景。计费是依据此处传递的场景计算。
-         * 视频默认1秒截取一帧，您可以自行控制截帧频率。收费按照视频的截帧数量以及每一帧的检测场景计算。
-         * 举例：1分钟的视频截帧60张，检测色情（对应场景参数porn）和暴恐涉政（对应场景参数terrorism）2个场景，收费按照60张色情+60张暴恐涉政进行计费。
+         * 设置要检测的场景。计费依据此处传递的场景计算。
+         * 视频默认1秒截取一帧，您可以自行控制截帧频率。收费按照视频的截帧数量以及每一帧的检测场景进行计算。
+         * 举例：1分钟的视频截帧60张，检测色情（对应场景参数porn）和暴恐涉政（对应场景参数terrorism）2个场景，收费按照60张色情+60张暴恐涉政进行计算。
          */
         JSONObject data = new JSONObject();
         data.put("scenes", Arrays.asList("porn", "terrorism"));
+        data.put("live", true);
         data.put("tasks", tasks);
-        data.put("callback", "http://www.aliyundoc.com/xxx.json");
+        data.put("callback", url);//您的回调地址
         data.put("seed", "yourPersonalSeed");
 
         videoAsyncScanRequest.setHttpContent(data.toJSONString().getBytes("UTF-8"), "UTF-8", FormatType.JSON);
@@ -57,7 +63,7 @@ public class OssVideoUtil {
          * 请务必设置超时时间。
          */
         videoAsyncScanRequest.setConnectTimeout(3000);
-        videoAsyncScanRequest.setReadTimeout(6000);
+        videoAsyncScanRequest.setReadTimeout(10000);
         try {
             HttpResponse httpResponse = client.doAction(videoAsyncScanRequest);
 
@@ -74,13 +80,12 @@ public class OssVideoUtil {
                         if (200 == taskCode) {
                             // 保存taskId用于轮询结果。
                             System.out.println(((JSONObject) taskResult).getString("taskId"));
-                            return true;
                         } else {
-                            // 单个视频处理失败，原因视具体的情况详细分析,扫描涉黄，中止
+                            // 单个视频处理失败，原因视具体的情况详细分析。
                             System.out.println("task process fail. task response:" + JSON.toJSONString(taskResult));
-                            return false;
                         }
                     }
+                    return true;
                 } else {
                     /**
                      * 表明请求整体处理失败，原因视具体的情况详细分析。
@@ -95,11 +100,6 @@ public class OssVideoUtil {
         } catch (ClientException e) {
             e.printStackTrace();
         }
-        return false;
-    }
-
-
-    public static void main(String[] args)  throws Exception{
-        OssVideoUtil.getScene("https://haokan.baidu.com/v?pd=wisenatural&vid=13755902194268986696");
+        return true;
     }
 }
