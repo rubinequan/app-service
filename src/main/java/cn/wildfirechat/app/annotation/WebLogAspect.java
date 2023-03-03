@@ -63,6 +63,7 @@ public class WebLogAspect {
         logPojo.setMac(request.getHeader("mac"));
         logPojo.setModel(request.getHeader("model"));
         logPojo.setPhone(phone);
+        logPojo.setMessageId("-1");
         // 执行方法
         Object proceed = null;
         try {
@@ -71,14 +72,15 @@ public class WebLogAspect {
             if (proceed instanceof RestResult) {
                 RestResult restResult = (RestResult) proceed;
                 logPojo.setFlag(restResult.getCode() == 0 ? true : false);
-                logPojo.setReason(restResult.getMessage());
+                logPojo.setRemark(restResult.getMessage());
             }
         } catch (Throwable throwable) {
             logPojo.setFlag(false);
-            logPojo.setReason(throwable.getLocalizedMessage());
+            logPojo.setRemark(throwable.getLocalizedMessage());
             throwable.printStackTrace();
         } finally {
             // 保存日志
+            logPojo.setMessageId("");
             mService.saveLog(logPojo);;
         }
         return proceed;

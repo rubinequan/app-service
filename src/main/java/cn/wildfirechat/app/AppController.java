@@ -263,4 +263,9 @@ public class AppController {
     public Object getGroupMembersForPortrait(@RequestBody GroupIdPojo groupIdPojo) {
         return mService.getGroupMembersForPortrait(groupIdPojo.groupId);
     }
+
+    @PostMapping(value = "/save/log", produces = "application/json;charset=UTF-8")
+    public Object saveMessageLog(@RequestBody SaveLogPojo pojo) {
+        return mService.saveMessageLog(pojo);
+    }
 }

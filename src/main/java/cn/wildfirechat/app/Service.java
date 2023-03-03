@@ -53,4 +53,6 @@ public interface Service {
     RestResult getGroupMembersForPortrait(String groupId);
 
     void saveLog(InputLog log);
+
+    RestResult saveMessageLog(SaveLogPojo pojo);
 }

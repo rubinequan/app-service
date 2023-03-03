@@ -42,6 +42,7 @@ public class RestResult {
         BLACKLIST_FAIL(33, "注销失败"),
         FILE_ILLEGALTY(34, "图片违规，或者文件违规"),
         REGISTER_FAIL(35, "注册失败"),
+        SAVE_LOG_FAIL(36, "保存日志失败"),
         ;
         public int code;
         public String msg;

@@ -220,9 +220,9 @@ public class ServiceImpl implements Service {
 
         //判断当前IP发送是否超频。
         //另外 cn.wildfirechat.app.shiro.AuthDataSource.Count 会对用户发送消息限频
-        if (!rateLimiter.isGranted(remoteIp)) {
-            return RestResult.result(ERROR_SEND_SMS_OVER_FREQUENCY.code, "IP " + remoteIp + " 请求短信超频", null);
-        }
+//        if (!rateLimiter.isGranted(remoteIp)) {
+//            return RestResult.result(ERROR_SEND_SMS_OVER_FREQUENCY.code, "IP " + remoteIp + " 请求短信超频", null);
+//        }
 
         try {
             //检查用户是否被封禁
@@ -1687,5 +1687,29 @@ public class ServiceImpl implements Service {
         } catch (Exception e) {
             System.out.println("保存日志异常："+e.getMessage());
         }
+    }
+
+    @Override
+    public RestResult saveMessageLog(SaveLogPojo pojo) {
+        try {
+            ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            HttpServletRequest request = requestAttributes.getRequest();
+            InputLog inputLog = new InputLog();
+            inputLog.setMessageId(pojo.getMessageId());
+            inputLog.setRemark(pojo.getUserId() + "->" +pojo.getTargetId());
+            inputLog.setFlag(true);
+            inputLog.setType(2);
+            inputLog.setIp(getIp());
+            inputLog.setMac(pojo.getMac());
+            inputLog.setModel(pojo.getModel());
+            inputLog.setPhone(pojo.getPhone());
+            inputLog.setPort(request.getRemotePort());
+            inputLog.setServerIp(request.getRemoteUser());
+            LogAdmin.saveLog(inputLog);
+        } catch (Exception e) {
+            System.out.println("保存日志异常："+e.getMessage());
+            return RestResult.error(SAVE_LOG_FAIL);
+        }
+        return RestResult.ok("保存成功");
     }
 }
