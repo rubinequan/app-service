@@ -1,5 +1,6 @@
 package cn.wildfirechat.app;
 
+import cn.wildfirechat.app.annotation.Log;
 import cn.wildfirechat.app.conference.OssImgUtil;
 import cn.wildfirechat.app.jpa.*;
 import cn.wildfirechat.app.pojo.*;
@@ -44,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -476,6 +478,7 @@ public class ServiceImpl implements Service {
         return RestResult.ok("举报成功");
     }
 
+    @Log(phone = "#request.phone")
     @Override
     public RestResult register(RegisterRequest request) {
         if(Objects.isNull(request)){
@@ -492,6 +495,21 @@ public class ServiceImpl implements Service {
             return RestResult.error(ERROR_PASSWORD_NULL);
         }
 
+
+        String captcha = "";
+        try {
+            if(recordRepository.findById(request.getPhone())!=null){
+                captcha = recordRepository.findById(request.getPhone()).get().getCode();
+            }
+        }catch (Exception e){
+            //  return RestResult.error(ERROR_CODE_EXPIRED);
+            return RestResult.error(ERROR_CODE_EXPIRED);
+        }
+
+        if(!request.getCode().equals(captcha)) {//注册用户
+            return RestResult.error(ERROR_CODE);
+        }
+
         try {
             IMResult<InputOutputUserInfo> userResult = UserAdmin.getUserByMobile(request.getPhone());
 
@@ -500,7 +518,7 @@ public class ServiceImpl implements Service {
             InputOutputUserInfo user;
             boolean isNewUser = false;
         //    if (userResult.getErrorCode() == ErrorCode.ERROR_CODE_NOT_EXIST) {
-            if(true){
+            if(userResult.getCode() != 0){
                 LOG.info("User not exist, try to create");
 
                 //获取用户名。如果用的是shortUUID生成器，是有极小概率会重复的，所以需要去检查是否已经存在相同的userName。
@@ -546,7 +564,7 @@ public class ServiceImpl implements Service {
                 password.setPassword(user.getPassword());
                 password.setResetCodeTime(new Date().getTime());
                 userPasswordRepository.save(password);
-            } else if (userResult.getCode() != 0) {
+            } else if (userResult.getCode() == 0) {
                 LOG.error("Get user failure {}", userResult.code);
                 return RestResult.error(RestResult.RestCode.USER_EXISTS);
             } else {
@@ -558,23 +576,7 @@ public class ServiceImpl implements Service {
             }
         }catch (Exception e){
             System.out.println("异常："+e.getMessage());
-        }
-
-
-        String code = "";
-        try {
-            if(recordRepository.findById(request.getPhone())!=null){
-                code = recordRepository.findById(request.getPhone()).get().getCode();
-            }
-        }catch (Exception e){
-          //  return RestResult.error(ERROR_CODE_EXPIRED);
-            return RestResult.ok("注册成功");
-        }
-
-        if(request.getCode().equals(code)) {//注册用户
-
-        }else{
-            return RestResult.error(ERROR_CODE);
+            return RestResult.error(REGISTER_FAIL);
         }
         return RestResult.ok("注册成功");
     }
@@ -1674,6 +1676,16 @@ public class ServiceImpl implements Service {
             e.printStackTrace();
             LOG.error("getGroupMembersForPortrait exception", e);
             return RestResult.error(ERROR_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    @Async
+    public void saveLog(InputLog log) {
+        try {
+            LogAdmin.saveLog(log);
+        } catch (Exception e) {
+            System.out.println("保存日志异常："+e.getMessage());
         }
     }
 }

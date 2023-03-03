@@ -4,6 +4,7 @@ package cn.wildfirechat.app;
 import cn.wildfirechat.app.jpa.FavoriteItem;
 import cn.wildfirechat.app.pojo.*;
 import cn.wildfirechat.pojos.InputCreateDevice;
+import cn.wildfirechat.pojos.InputLog;
 import cn.wildfirechat.pojos.InputOutputUserInfo;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,4 +51,6 @@ public interface Service {
     RestResult removeFavoriteItems(long id);
     RestResult getFavoriteItems(long id, int count);
     RestResult getGroupMembersForPortrait(String groupId);
+
+    void saveLog(InputLog log);
 }
