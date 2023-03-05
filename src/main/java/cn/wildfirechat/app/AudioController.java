@@ -43,7 +43,7 @@ public class AudioController {
         String mp3FileName = amrUrl.substring(amrUrl.lastIndexOf('/') + 1) + ".mp3";
         try {
             System.out.println("voice url:"+ amrUrl);
-            if(!OssVoiceUtils.getScene(amrUrl)){
+            if(!OssVoiceUtils.getFlag(amrUrl)){
                 throw new FileNotFoundException("语音违规");
             }
         }catch (Exception e){

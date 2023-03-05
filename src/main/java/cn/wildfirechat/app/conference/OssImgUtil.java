@@ -1,5 +1,6 @@
 package cn.wildfirechat.app.conference;
 
+import cn.wildfirechat.app.ServiceImpl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -110,6 +111,7 @@ public class OssImgUtil {
             System.out.println(JSON.toJSONString(scrResponse, true));
             int requestCode = scrResponse.getIntValue("code");
             // 每一张图片的检测结果。
+            ServiceImpl.delteTempFile(file);
             JSONArray taskResults = scrResponse.getJSONArray("data");
             if (200 == requestCode) {
                 for (Object taskResult : taskResults) {
@@ -124,6 +126,9 @@ public class OssImgUtil {
                             // 根据scene和suggestion做相关处理。
                             // 根据不同的suggestion结果做业务上的不同处理。例如，将违规数据删除等。
                             System.out.println("scene = [" + scene + "]");
+                            if(suggestion.equals("pass")){
+                                return false;
+                            }
                             System.out.println("suggestion = [" + suggestion + "]");
                         }
                         return true;

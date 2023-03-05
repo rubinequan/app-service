@@ -102,7 +102,7 @@ public class OssMessageUtil {
     }
 
     public static void main(String[] args) throws Exception {
-        OssMessageUtil.getScene("看黑丝");
+        OssMessageUtil.getScene("操你妈");
     }
 
 }

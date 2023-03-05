@@ -2,6 +2,7 @@ package cn.wildfirechat.app;
 
 import cn.wildfirechat.app.annotation.Log;
 import cn.wildfirechat.app.conference.OssImgUtil;
+import cn.wildfirechat.app.conference.OssVideoUtil;
 import cn.wildfirechat.app.jpa.*;
 import cn.wildfirechat.app.pojo.*;
 import cn.wildfirechat.app.shiro.AuthDataSource;
@@ -55,8 +56,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -1202,17 +1202,65 @@ public class ServiceImpl implements Service {
     @Override
     public RestResult saveUserLogs(String userId, MultipartFile file) {
         File localFile = new File(userLogPath, userId + "_" + file.getOriginalFilename());
-        if(!OssImgUtil.getScene(localFile)){
-            return RestResult.error(FILE_ILLEGALTY);
-        }
         try {
-            file.transferTo(localFile);
-        } catch (IOException e) {
+            if(file.getOriginalFilename().indexOf(".jpg") >= 0 || file.getOriginalFilename().indexOf(".png") >= 0){//图片审核
+                if(!OssImgUtil.getScene(multipartFileToFile(file))){
+                    return RestResult.error(FILE_ILLEGALTY);
+                }
+            }
+            if(file.getOriginalFilename().indexOf(".mp4") >= 0){//图片审核
+//                if(!OssVideoUtil.getScene(multipartFileToFile(file))){
+//                    return RestResult.error(VIEDO_ILLEGALTY);
+//                }
+            }
+            File sb = multipartFileToFile(file);
+            delteTempFile(sb);
+            file.transferTo(sb);
+        } catch (Exception e) {
             e.printStackTrace();
             return RestResult.error(ERROR_SERVER_ERROR);
         }
 
         return RestResult.ok(null);
+    }
+
+    public static File multipartFileToFile(MultipartFile file) throws Exception {
+
+        File toFile = null;
+        if (file.equals("") || file.getSize() <= 0) {
+            file = null;
+        } else {
+            InputStream ins = null;
+            ins = file.getInputStream();
+
+            toFile = new File(file.getOriginalFilename());
+            inputStreamToFile(ins, toFile);
+            ins.close();
+        }
+        return toFile;
+    }
+
+
+    private static void inputStreamToFile(InputStream ins, File file) {
+        try {
+            OutputStream os = new FileOutputStream(file);
+            int bytesRead = 0;
+            byte[] buffer = new byte[8192];
+            while ((bytesRead = ins.read(buffer, 0, 8192)) != -1) {
+                os.write(buffer, 0, bytesRead);
+            }
+            os.close();
+            ins.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void delteTempFile(File file) {
+        if (file != null) {
+            File del = new File(file.toURI());
+            del.delete();
+        }
     }
 
     @Override

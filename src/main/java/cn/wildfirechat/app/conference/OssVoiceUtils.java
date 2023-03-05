@@ -17,7 +17,7 @@ import java.util.*;
 
 public class OssVoiceUtils {
 
-    public static boolean getScene(String url) throws Exception{
+    public static String getScene(String url) throws Exception{
 
         // 请替换成您的AccessKey ID、AccessKey Secret。
         IClientProfile profile = DefaultProfile.getProfile("oss-beijing", "LTAI5tN4daQRKSBMx865uP8y", "A28GboYEcZTbPjuuXLxv8lHRdZJyGG");
@@ -58,6 +58,7 @@ public class OssVoiceUtils {
                         if (200 == code) {
                             final String taskId = ((JSONObject) taskResult).getString("taskId");
                             System.out.println("submit async task success, taskId = [" + taskId + "]");
+                            return taskId;
                         } else {
                             System.out.println("task process fail: " + code);
                         }
@@ -71,11 +72,115 @@ public class OssVoiceUtils {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
+        return "";
+    }
+
+    public static boolean pollingScanResult(IAcsClient client, String taskId) throws InterruptedException {
+        int failCount = 0;
+        boolean stop = false;
+        do {
+            // 设置每10秒查询一次。
+            Thread.sleep(10 * 1000);
+            JSONObject scanResult = getScanResult(client, taskId);
+            if (scanResult == null || 200 != scanResult.getInteger("code")) {
+                failCount++;
+                System.out.println(taskId + ": get result fail, failCount=" + failCount);
+                if (scanResult != null) {
+                    System.out.println(taskId + ": errorMsg:" + scanResult.getString("msg"));
+                }
+                if (failCount > 20) {
+                    break;
+                }
+                continue;
+            }
+
+            JSONArray taskResults = scanResult.getJSONArray("data");
+            if (taskResults.isEmpty()) {
+                System.out.println("failed");
+                break;
+            }
+
+            for (Object taskResult : taskResults) {
+                JSONObject result = (JSONObject) taskResult;
+                Integer code = result.getInteger("code");
+                if (280 == code) {
+                    System.out.println(taskId + ": processing status: " + result.getString("msg"));
+                } else if (200 == code) {
+                    System.out.println(taskId + ": ========== SUCCESS ===========");
+                    System.out.println(JSON.toJSONString(scanResult, true));
+                    System.out.println(taskId + ": ========== SUCCESS ===========");
+                    stop = true;
+                    return true;
+                } else {
+                    System.out.println(taskId + ": ========== FAILED ===========");
+                    System.out.println(JSON.toJSONString(scanResult, true));
+                    System.out.println(taskId + ": ========== FAILED ===========");
+                    stop = true;
+                    return false;
+                }
+            }
+        } while (!stop);
+        return stop;
+    }
+
+    private static JSONObject getScanResult(IAcsClient client, String taskId) {
+        VoiceAsyncScanResultsRequest getResultsRequest = new VoiceAsyncScanResultsRequest();
+        getResultsRequest.setAcceptFormat(FormatType.JSON); // 指定API返回格式。
+        getResultsRequest.setMethod(com.aliyuncs.http.MethodType.POST); // 指定请求方法。
+        getResultsRequest.setEncoding("utf-8");
+        getResultsRequest.setRegionId("cn-beijing");
+
+
+        List<Map<String, Object>> tasks = new ArrayList<Map<String, Object>>();
+        Map<String, Object> task1 = new LinkedHashMap<String, Object>();
+        task1.put("taskId", taskId);
+        tasks.add(task1);
+
+        /**
+         * 请务必设置超时时间。
+         */
+        getResultsRequest.setConnectTimeout(3000);
+        getResultsRequest.setReadTimeout(6000);
+
+        try {
+            getResultsRequest.setHttpContent(JSON.toJSONString(tasks).getBytes("UTF-8"), "UTF-8", FormatType.JSON);
+
+            HttpResponse httpResponse = client.doAction(getResultsRequest);
+            if (httpResponse.isSuccess()) {
+                return JSON.parseObject(new String(httpResponse.getHttpContent(), "UTF-8"));
+            } else {
+                System.out.println("response not success. status: " + httpResponse.getStatus());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public static void main(String[] args) throws Exception {
         //返回true合法，返回fasle违规
-        System.out.println("是否违规："+OssVoiceUtils.getScene("http://169.254.10.211/fs/2/2023/02/27/23/OXlncW13czJr-2-1677512219-dQLXospIopLz.mp3"));
+        // 请替换成您的AccessKey ID、AccessKey Secret。
+        IClientProfile profile = DefaultProfile
+                .getProfile("oss-beijing", "LTAI5tN4daQRKSBMx865uP8y", "A28GboYEcZTbPjuuXLxv8lHRdZJyGG");
+        final IAcsClient client = new DefaultAcsClient(profile);
+
+        pollingScanResult(client, OssVoiceUtils.getScene("http://169.254.10.211:80/fs/2/2023/03/05/12/b3lncW13czJr-2-1677992120-GZE4nxJAfc72.mp3"));
+        String taskId = OssVoiceUtils.getScene("http://169.254.10.211:80/fs/2/2023/03/05/12/b3lncW13czJr-2-1677992120-GZE4nxJAfc72.mp3");
+        //String taskId = OssVoiceUtils.getScene("http://169.254.10.211:80/fs/2/2023/03/05/12/b3lncW13czJr-2-1677992176-bGJ64FfJoWii.mp3");
+        pollingScanResult(client, taskId);
+    }
+
+    public static boolean getFlag(String amrUrl) {
+        try {
+            // 请替换成您的AccessKey ID、AccessKey Secret。
+            IClientProfile profile = DefaultProfile
+                    .getProfile("oss-beijing", "LTAI5tN4daQRKSBMx865uP8y", "A28GboYEcZTbPjuuXLxv8lHRdZJyGG");
+            final IAcsClient client = new DefaultAcsClient(profile);
+            pollingScanResult(client, OssVoiceUtils.getScene(amrUrl));
+        }catch (Exception e){
+            System.out.println("e"+e.getMessage());
+        }
+
+        return false;
     }
 }

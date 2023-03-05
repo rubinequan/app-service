@@ -40,7 +40,8 @@ public class RestResult {
         BEIJUBAO_NO_EXISTS(33, "被举报人不存在"),
         DEL_FAIL(32, "删除失败"),
         BLACKLIST_FAIL(33, "注销失败"),
-        FILE_ILLEGALTY(34, "图片违规，或者文件违规"),
+        FILE_ILLEGALTY(34, "图片违规，无法上传"),
+        VIEDO_ILLEGALTY(34, "视频违规，无法上传"),
         REGISTER_FAIL(35, "注册失败"),
         SAVE_LOG_FAIL(36, "保存日志失败"),
         ;
