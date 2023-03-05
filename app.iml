@@ -217,6 +217,7 @@
     <orderEntry type="library" name="Maven: com.aliyun:aliyun-java-sdk-green:3.6.6" level="project"/>  
     <orderEntry type="library" name="Maven: com.alibaba:fastjson:1.2.66" level="project"/>  
     <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.10" level="project"/>  
+    <orderEntry type="library" name="common-1.1" level="project"/>  
     <orderEntry type="module-library">
       <library>
         <CLASSES>

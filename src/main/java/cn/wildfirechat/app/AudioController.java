@@ -44,10 +44,13 @@ public class AudioController {
         try {
             System.out.println("voice url:"+ amrUrl);
             if(!OssVoiceUtils.getFlag(amrUrl)){
+                System.out.println("语音违规");
                 throw new FileNotFoundException("语音违规");
             }
+            System.out.println("語音正常");
         }catch (Exception e){
             System.out.println("语音异常："+e.getMessage());
+            throw new FileNotFoundException("语音违规");
         }
         File mp3File = new File(cacheDir, mp3FileName);
         if (mp3File.exists()) {

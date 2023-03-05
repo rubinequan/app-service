@@ -12,6 +12,7 @@ import com.aliyuncs.http.FormatType;
 import com.aliyuncs.http.HttpResponse;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
+import com.google.gson.JsonObject;
 
 import java.util.*;
 
@@ -108,6 +109,13 @@ public class OssVoiceUtils {
                 } else if (200 == code) {
                     System.out.println(taskId + ": ========== SUCCESS ===========");
                     System.out.println(JSON.toJSONString(scanResult, true));
+                    if(scanResult.get("data")!=null){
+                        JSONObject results= JSONObject.parseObject(scanResult.get("data").toString());
+                        //判断返回类型不等于normal正常的都拦截下来了
+                        if(results.get("label")!=null && !results.get("label").toString().equals("normal")){
+                            return false;
+                        }
+                    }
                     System.out.println(taskId + ": ========== SUCCESS ===========");
                     stop = true;
                     return true;
@@ -176,7 +184,7 @@ public class OssVoiceUtils {
             IClientProfile profile = DefaultProfile
                     .getProfile("oss-beijing", "LTAI5tN4daQRKSBMx865uP8y", "A28GboYEcZTbPjuuXLxv8lHRdZJyGG");
             final IAcsClient client = new DefaultAcsClient(profile);
-            pollingScanResult(client, OssVoiceUtils.getScene(amrUrl));
+           return pollingScanResult(client, OssVoiceUtils.getScene(amrUrl));
         }catch (Exception e){
             System.out.println("e"+e.getMessage());
         }
