@@ -12,7 +12,7 @@ import com.aliyuncs.http.FormatType;
 import com.aliyuncs.http.HttpResponse;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
-import com.google.gson.JsonObject;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -71,7 +71,7 @@ public class OssVoiceUtils {
                 System.out.println("response not success. status: " + httpResponse.getStatus());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("检测异常：" + e.getLocalizedMessage());
         }
         return "";
     }
@@ -80,8 +80,13 @@ public class OssVoiceUtils {
         int failCount = 0;
         boolean stop = false;
         do {
+            if (StringUtils.isEmpty(taskId)) {
+                System.out.println("taskId为空");
+                stop = true;
+                return false;
+            }
             // 设置每10秒查询一次。
-            Thread.sleep(10 * 1000);
+            Thread.sleep(4 * 1000);
             JSONObject scanResult = getScanResult(client, taskId);
             if (scanResult == null || 200 != scanResult.getInteger("code")) {
                 failCount++;
@@ -110,10 +115,18 @@ public class OssVoiceUtils {
                     System.out.println(taskId + ": ========== SUCCESS ===========");
                     System.out.println(JSON.toJSONString(scanResult, true));
                     if(scanResult.get("data")!=null){
-                        JSONObject results= JSONObject.parseObject(scanResult.get("data").toString());
-                        //判断返回类型不等于normal正常的都拦截下来了
-                        if(results.get("label")!=null && !results.get("label").toString().equals("normal")){
-                            return false;
+                        List<JSONObject> list = JSONArray.parseArray(scanResult.get("data").toString(), JSONObject.class);
+                        //JSONObject results= JSONObject.parseObject(scanResult.get("data").toString());
+                        for (JSONObject jsonObject : list) {
+                            List<JSONObject> results = JSONArray.parseArray(jsonObject.get("results").toString(), JSONObject.class);
+                            //判断返回类型不等于normal正常的都拦截下来了
+                            for (JSONObject result1 : results) {
+                                if(!"normal".equals(result1.getString("label"))){
+                                    stop = true;
+                                    return false;
+                                }
+                            }
+
                         }
                     }
                     System.out.println(taskId + ": ========== SUCCESS ===========");
@@ -184,11 +197,12 @@ public class OssVoiceUtils {
             IClientProfile profile = DefaultProfile
                     .getProfile("oss-beijing", "LTAI5tN4daQRKSBMx865uP8y", "A28GboYEcZTbPjuuXLxv8lHRdZJyGG");
             final IAcsClient client = new DefaultAcsClient(profile);
-           return pollingScanResult(client, OssVoiceUtils.getScene(amrUrl));
+            String url = OssVoiceUtils.getScene(amrUrl);
+            return pollingScanResult(client, url);
         }catch (Exception e){
-            System.out.println("e"+e.getMessage());
+            System.out.println("校验语音信息异常："+e.getMessage());
+            // 抛出异常，表示校验语音异常
+            throw new RuntimeException(e.getLocalizedMessage());
         }
-
-        return false;
     }
 }

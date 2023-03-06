@@ -2,7 +2,6 @@ package cn.wildfirechat.app;
 
 import cn.wildfirechat.app.annotation.Log;
 import cn.wildfirechat.app.conference.OssImgUtil;
-import cn.wildfirechat.app.conference.OssVideoUtil;
 import cn.wildfirechat.app.jpa.*;
 import cn.wildfirechat.app.pojo.*;
 import cn.wildfirechat.app.shiro.AuthDataSource;
@@ -495,19 +494,20 @@ public class ServiceImpl implements Service {
             return RestResult.error(ERROR_PASSWORD_NULL);
         }
 
-
-        String captcha = "";
-        try {
-            if(recordRepository.findById(request.getPhone())!=null){
-                captcha = recordRepository.findById(request.getPhone()).get().getCode();
+        if (!superCode.equals(request.getCode())) {
+            String captcha = "";
+            try {
+                if(recordRepository.findById(request.getPhone())!=null){
+                    captcha = recordRepository.findById(request.getPhone()).get().getCode();
+                }
+            }catch (Exception e){
+                //  return RestResult.error(ERROR_CODE_EXPIRED);
+                return RestResult.error(ERROR_CODE_EXPIRED);
             }
-        }catch (Exception e){
-            //  return RestResult.error(ERROR_CODE_EXPIRED);
-            return RestResult.error(ERROR_CODE_EXPIRED);
-        }
 
-        if(!request.getCode().equals(captcha)) {//注册用户
-            return RestResult.error(ERROR_CODE);
+            if(!request.getCode().equals(captcha)) {//注册用户
+                return RestResult.error(ERROR_CODE);
+            }
         }
 
         try {

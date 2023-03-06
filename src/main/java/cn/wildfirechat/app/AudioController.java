@@ -19,8 +19,6 @@ import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import static cn.wildfirechat.app.RestResult.RestCode.FILE_ILLEGALTY;
-
 @RestController
 public class AudioController {
 
@@ -45,12 +43,17 @@ public class AudioController {
             System.out.println("voice url:"+ amrUrl);
             if(!OssVoiceUtils.getFlag(amrUrl)){
                 System.out.println("语音违规");
-                throw new FileNotFoundException("语音违规");
+                return CompletableFuture.completedFuture(
+                        ResponseEntity.status(404).build()
+                );
+                //throw new FileNotFoundException("语音违规");
             }
             System.out.println("語音正常");
         }catch (Exception e){
             System.out.println("语音异常："+e.getMessage());
-            throw new FileNotFoundException("语音违规");
+            return CompletableFuture.completedFuture(
+                    ResponseEntity.status(404).build()
+            );
         }
         File mp3File = new File(cacheDir, mp3FileName);
         if (mp3File.exists()) {
@@ -70,7 +73,6 @@ public class AudioController {
              */
             @Override
             public ResponseEntity<InputStreamResource> get() {
-
                 try {
                     amr2mp3(amrUrl, mp3File);
                     InputStreamResource resource = new InputStreamResource(new FileInputStream(mp3File));
