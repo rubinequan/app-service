@@ -80,13 +80,6 @@ public class OssVoiceUtils {
         int failCount = 0;
         boolean stop = false;
         do {
-            if (StringUtils.isEmpty(taskId)) {
-                System.out.println("taskId为空");
-                stop = true;
-                return false;
-            }
-            // 设置每10秒查询一次。
-            Thread.sleep(4 * 1000);
             JSONObject scanResult = getScanResult(client, taskId);
             if (scanResult == null || 200 != scanResult.getInteger("code")) {
                 failCount++;
@@ -112,24 +105,18 @@ public class OssVoiceUtils {
                 if (280 == code) {
                     System.out.println(taskId + ": processing status: " + result.getString("msg"));
                 } else if (200 == code) {
-                    System.out.println(taskId + ": ========== SUCCESS ===========");
+                    //System.out.println(taskId + ": ========== SUCCESS ===========");
                     System.out.println(JSON.toJSONString(scanResult, true));
-                    if(scanResult.get("data")!=null){
-                        List<JSONObject> list = JSONArray.parseArray(scanResult.get("data").toString(), JSONObject.class);
-                        //JSONObject results= JSONObject.parseObject(scanResult.get("data").toString());
-                        for (JSONObject jsonObject : list) {
-                            List<JSONObject> results = JSONArray.parseArray(jsonObject.get("results").toString(), JSONObject.class);
-                            //判断返回类型不等于normal正常的都拦截下来了
-                            for (JSONObject result1 : results) {
-                                if(!"normal".equals(result1.getString("label"))){
-                                    stop = true;
-                                    return false;
-                                }
+                    if(taskResult != null){
+                        List<JSONObject> results = JSONArray.parseArray(result.getString("results"), JSONObject.class);
+                        //判断返回类型不等于normal正常的都拦截下来了
+                        for (JSONObject result1 : results) {
+                            if(!"normal".equals(result1.getString("label"))){
+                                stop = true;
+                                return false;
                             }
-
                         }
                     }
-                    System.out.println(taskId + ": ========== SUCCESS ===========");
                     stop = true;
                     return true;
                 } else {
@@ -140,6 +127,8 @@ public class OssVoiceUtils {
                     return false;
                 }
             }
+            // 设置每10秒查询一次。
+            Thread.sleep(4 * 1000);
         } while (!stop);
         return stop;
     }
@@ -198,6 +187,10 @@ public class OssVoiceUtils {
                     .getProfile("oss-beijing", "LTAI5tN4daQRKSBMx865uP8y", "A28GboYEcZTbPjuuXLxv8lHRdZJyGG");
             final IAcsClient client = new DefaultAcsClient(profile);
             String url = OssVoiceUtils.getScene(amrUrl);
+            if (StringUtils.isEmpty(url)) {
+                System.out.println("taskId为空");
+                return false;
+            }
             return pollingScanResult(client, url);
         }catch (Exception e){
             System.out.println("校验语音信息异常："+e.getMessage());
