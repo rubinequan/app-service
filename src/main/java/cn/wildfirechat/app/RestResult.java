@@ -44,6 +44,9 @@ public class RestResult {
         VIEDO_ILLEGALTY(34, "视频违规，无法上传"),
         REGISTER_FAIL(35, "注册失败"),
         SAVE_LOG_FAIL(36, "保存日志失败"),
+        SEARCH_MESSAGE_FAIL(37, "查询消息异常"),
+        NICKNAME_VALIDATE_FAIL(38, "昵称违规"),
+        PORTRAIT_VALIDATE_FAIL(39, "头像违规"),
         ;
         public int code;
         public String msg;

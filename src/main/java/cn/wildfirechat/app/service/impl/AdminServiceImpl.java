@@ -5,23 +5,21 @@ import cn.wildfirechat.app.jpa.Report;
 import cn.wildfirechat.app.jpa.ReportRepository;
 import cn.wildfirechat.app.pojo.AdminLogin;
 import cn.wildfirechat.app.pojo.BlackListStatusPojo;
+import cn.wildfirechat.app.pojo.SearchMessagePojo;
 import cn.wildfirechat.app.pojo.UserGroupDel;
 import cn.wildfirechat.app.service.AdminService;
-import cn.wildfirechat.pojos.InputOutputUserInfo;
-import cn.wildfirechat.pojos.OutputUserStatus;
-import cn.wildfirechat.sdk.GroupAdmin;
-import cn.wildfirechat.sdk.RelationAdmin;
-import cn.wildfirechat.sdk.SensitiveAdmin;
-import cn.wildfirechat.sdk.UserAdmin;
+import cn.wildfirechat.pojos.OutputSearchMessageList;
+import cn.wildfirechat.sdk.*;
 import cn.wildfirechat.sdk.model.IMResult;
-import com.qiniu.util.Json;
-import org.apache.logging.log4j.core.util.JsonUtils;
+import com.alibaba.fastjson.JSON;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static cn.wildfirechat.app.RestResult.RestCode.SEARCH_MESSAGE_FAIL;
 
 @Service
 public class AdminServiceImpl implements AdminService {
@@ -160,6 +158,19 @@ public class AdminServiceImpl implements AdminService {
             return RestResult.ok(voidIMResult);
         } catch (Exception e) {
             return RestResult.error(RestResult.RestCode.BLACKLIST_FAIL);
+        }
+    }
+
+    @Override
+    public Object searchMessage(SearchMessagePojo pojo) {
+        try {
+            if (StringUtils.isEmpty(pojo.getMessage())) {
+                pojo.setMessage("");
+            }
+            IMResult<OutputSearchMessageList> result = SearchMessageAdmin.searchMessage(JSON.toJSONString(pojo));
+            return RestResult.ok(result);
+        } catch (Exception e) {
+            return RestResult.error(SEARCH_MESSAGE_FAIL);
         }
     }
 }

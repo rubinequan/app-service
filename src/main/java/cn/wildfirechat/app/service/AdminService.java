@@ -4,6 +4,7 @@ import cn.wildfirechat.app.RestResult;
 import cn.wildfirechat.app.jpa.Report;
 import cn.wildfirechat.app.pojo.AdminLogin;
 import cn.wildfirechat.app.pojo.BlackListStatusPojo;
+import cn.wildfirechat.app.pojo.SearchMessagePojo;
 import cn.wildfirechat.app.pojo.UserGroupDel;
 
 import java.util.List;
@@ -35,4 +36,6 @@ public interface AdminService {
     Object blacklist(BlackListStatusPojo pojo);
 
     Object userDestroy(String userId);
+
+    Object searchMessage(SearchMessagePojo pojo);
 }

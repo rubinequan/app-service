@@ -66,9 +66,9 @@ public class AppController {
         return mService.register(request);
     }
 
-    @PostMapping(value = "/updateUser", produces = "application/json;charset=UTF-8")
-    public Object updateUser(@RequestBody InputOutputUserInfo request) {
-        return mService.updateUser(request);
+    @PostMapping(value = "/updateUser")
+    public Object updateUser(InputOutputUserInfo request, @RequestParam(value = "file", required = false) MultipartFile file) {
+        return mService.updateUser(request, file);
     }
 
     @PostMapping(value = "/send_reset_code", produces = "application/json;charset=UTF-8")

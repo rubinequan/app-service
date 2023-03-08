@@ -65,7 +65,7 @@ public class OssMessageUtil {
                 return false;
             }
             JSONObject scrResponse = JSON.parseObject(new String(httpResponse.getHttpContent(), "UTF-8"));
-            System.out.println(JSON.toJSONString(scrResponse, true));
+            //System.out.println(JSON.toJSONString(scrResponse, true));
             if (200 != scrResponse.getInteger("code")) {
                 System.out.println("detect not success. code:" + scrResponse.getInteger("code"));
                 // 业务处理。
@@ -98,11 +98,11 @@ public class OssMessageUtil {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
+        return true;
     }
 
     public static void main(String[] args) throws Exception {
-        OssMessageUtil.getScene("操你妈");
+        OssMessageUtil.getScene("看黑丝");
     }
 
 }

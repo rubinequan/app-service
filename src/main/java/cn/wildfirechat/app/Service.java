@@ -18,7 +18,7 @@ public interface Service {
     RestResult report( ReportRequest response);
     RestResult register(RegisterRequest request);
 
-    RestResult updateUser(InputOutputUserInfo request);
+    RestResult updateUser(InputOutputUserInfo request, MultipartFile file);
 
     RestResult changePassword(String oldPwd, String newPwd);
     RestResult resetPassword(String mobile, String resetCode, String newPwd);

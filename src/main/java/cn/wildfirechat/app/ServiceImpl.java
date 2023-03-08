@@ -2,6 +2,7 @@ package cn.wildfirechat.app;
 
 import cn.wildfirechat.app.annotation.Log;
 import cn.wildfirechat.app.conference.OssImgUtil;
+import cn.wildfirechat.app.conference.OssMessageUtil;
 import cn.wildfirechat.app.jpa.*;
 import cn.wildfirechat.app.pojo.*;
 import cn.wildfirechat.app.shiro.AuthDataSource;
@@ -36,6 +37,7 @@ import com.qiniu.util.Auth;
 import io.minio.MinioClient;
 import io.minio.PutObjectOptions;
 import io.minio.errors.MinioException;
+import org.apache.commons.io.FileUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.crypto.hash.Sha1Hash;
@@ -62,6 +64,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -582,13 +585,84 @@ public class ServiceImpl implements Service {
     }
 
     @Override
-    public RestResult updateUser(InputOutputUserInfo request) {
+    public RestResult updateUser(InputOutputUserInfo request, MultipartFile file) {
         try {
-          taskCommpal.updateUser(request);
+            if (file != null) {
+                // 保存头像并且阿里云检测
+                String portrait = null;
+                try {
+                    portrait = this.validateAvatar(file);
+                } catch (Exception e) {
+                    System.out.println("头像错误信息:" + e.getLocalizedMessage());
+                    return RestResult.error(PORTRAIT_VALIDATE_FAIL);
+                }
+                if (StringUtils.isEmpty(portrait)) {
+                    System.out.println("头像违规");
+                    return RestResult.error(PORTRAIT_VALIDATE_FAIL);
+                }
+                request.setPortrait(portrait);
+            }
+            if (!StringUtils.isEmpty(request.getDisplayName())) {
+                // 阿里云审核
+                if (!OssMessageUtil.getScene(request.getDisplayName())) {
+                    System.out.println("昵称违规");
+                    return RestResult.error(NICKNAME_VALIDATE_FAIL);
+                }
+            }
+            taskCommpal.updateUser(request);
         }catch (Exception e){
             System.out.println("异常："+e.getMessage());
         }
         return RestResult.ok("修改成功");
+    }
+
+    private String validateAvatar(MultipartFile file) throws IOException {
+        String name = file.getOriginalFilename().toLowerCase();
+        if(name.indexOf(".jpg") >= 0 || name.indexOf(".png") >= 0){//图片审核
+            SimpleDateFormat time=new SimpleDateFormat("yyyy/MM/dd/HH");
+            String datePath = time.format(new Date());
+            String dir = "./fs/portrait/" + datePath;
+            //String dir = ClassUtils.getDefaultClassLoader().getResource("").getPath()+"/media/"+datePath+"/";
+            System.out.println(dir);
+            File dirFile = new File(dir);
+            boolean fileDir  = dirFile.exists();
+
+            if(!fileDir) {
+                fileDir = dirFile.mkdirs();
+                if (!fileDir) {
+                    throw new RuntimeException("创建目录异常");
+                }
+            }
+            File targetFile = new File(dirFile + "\\" + name);
+            FileUtils.writeByteArrayToFile(targetFile, file.getBytes());
+            // 上传阿里云检测
+            boolean scene = false;
+            try {
+                scene = OssImgUtil.getScene(targetFile);
+                if(scene){
+                    return null;
+                }
+                FileUtils.writeByteArrayToFile(targetFile, file.getBytes());
+            } catch (Exception e) {
+                //删除磁盘上的音视频
+                File oldFile = new File(dirFile + "\\" + name);
+                if(oldFile.exists()) {
+                    oldFile.delete();
+                }
+            } finally {
+                if (scene) {
+                    //删除磁盘上的图片
+                    File oldFile = new File(dirFile + "\\" + name);
+                    if(oldFile.exists()) {
+                        oldFile.delete();
+                    }
+                }
+            }
+            return dirFile + "\\" + name;
+
+        }
+        System.out.println("头像不是jpg和png格式");
+        return null;
     }
 
     @Override
