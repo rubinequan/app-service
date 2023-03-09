@@ -172,6 +172,9 @@ public class ServiceImpl implements Service {
     @Value("${local.media.temp_storage}")
     private String ossTempPath;
 
+    @Value("${portrait.address}")
+    private String portraitAddress;
+
     private ConcurrentHashMap<String, Boolean> supportPCQuickLoginUsers = new ConcurrentHashMap<>();
 
     @PostConstruct
@@ -381,7 +384,9 @@ public class ServiceImpl implements Service {
                 return RestResult.error(USER_NOT_EXISTS);
             }
             if(optional.get()!=null){
-                if(!optional.get().getPassword().equals(password)){
+                MessageDigest md5 = MessageDigest.getInstance("MD5");
+                String passwdMd5 = Base64.getEncoder().encodeToString(md5.digest(password.getBytes("utf-8")));
+                if(!optional.get().getPassword().equals(passwdMd5)){
                     return RestResult.error(ERROR_PASSWORD_INCORRECT);
                 }
             }
@@ -524,6 +529,10 @@ public class ServiceImpl implements Service {
             if(userResult.getCode() != 0){
                 LOG.info("User not exist, try to create");
 
+                // 加密
+                MessageDigest md5 = MessageDigest.getInstance("MD5");
+                String passwdMd5 = Base64.getEncoder().encodeToString(md5.digest(request.getPassword().getBytes("utf-8")));
+
                 //获取用户名。如果用的是shortUUID生成器，是有极小概率会重复的，所以需要去检查是否已经存在相同的userName。
                 //ShortUUIDGenerator内的main函数有测试代码，可以观察一下碰撞的概率，这个重复是理论上的，作者测试了几千万次次都没有产生碰撞。
                 //另外由于并发的问题，也有同时生成相同的id并同时去检查的并同时通过的情况，但这种情况概率极低，可以忽略不计。
@@ -546,6 +555,7 @@ public class ServiceImpl implements Service {
                 } else {
                     user.setDisplayName(mobile);
                 }
+                //  这里不加密，在入库的时候加密了
                 user.setPassword(request.getPassword());
                 user.setMobile(mobile);
                 IMResult<OutputCreateUser> userIdResult = UserAdmin.createUser(user);
@@ -564,7 +574,7 @@ public class ServiceImpl implements Service {
                 if(!StringUtils.isEmpty(request.getInvitationCode())){
                     password.setResetCode(request.getInvitationCode());
                 }
-                password.setPassword(user.getPassword());
+                password.setPassword(passwdMd5);
                 password.setResetCodeTime(new Date().getTime());
                 userPasswordRepository.save(password);
             } else if (userResult.getCode() == 0) {
@@ -633,8 +643,7 @@ public class ServiceImpl implements Service {
                     throw new RuntimeException("创建目录异常");
                 }
             }
-            String url = dirFile + "\\" + name;
-            File targetFile = new File(url);
+            File targetFile = new File(dirFile + "\\" + name);
             FileUtils.writeByteArrayToFile(targetFile, file.getBytes());
             // 上传阿里云检测
             boolean scene = false;
@@ -645,21 +654,19 @@ public class ServiceImpl implements Service {
                 }
             } catch (Exception e) {
                 //删除磁盘上的音视频
-                File oldFile = new File(url);
-                if(oldFile.exists()) {
-                    oldFile.delete();
+                if(targetFile.exists()) {
+                    targetFile.delete();
                 }
                 return null;
             } finally {
                 if (scene) {
                     //删除磁盘上的图片
-                    File oldFile = new File(url);
-                    if(oldFile.exists()) {
-                        oldFile.delete();
+                    if(targetFile.exists()) {
+                        targetFile.delete();
                     }
                 }
             }
-            return url;
+            return portraitAddress + (dir+"/"+name).substring(1);
 
         }
         System.out.println("头像不是jpg和png格式");
@@ -673,8 +680,12 @@ public class ServiceImpl implements Service {
         Optional<UserPassword> optional = userPasswordRepository.findById(userId);
         if (optional.isPresent()) {
             try {
-                if(optional.get().getPassword().equals(oldPwd)) {
-                    changePassword(optional.get(), newPwd);
+                // 加密
+                MessageDigest md5 = MessageDigest.getInstance("MD5");
+                String oldPasswdMd5 = Base64.getEncoder().encodeToString(md5.digest(oldPwd.getBytes("utf-8")));
+                if(optional.get().getPassword().equals(oldPasswdMd5)) {
+                    String newPasswordMD5 = Base64.getEncoder().encodeToString(md5.digest(newPwd.getBytes("utf-8")));
+                    changePassword(optional.get(), newPasswordMD5);
                     return RestResult.ok(null);
                 }
             } catch (Exception e) {
@@ -722,7 +733,9 @@ public class ServiceImpl implements Service {
             UserPassword up = optional.get();
             if(resetCode.equals(code)) {
                 try {
-                    changePassword(up, newPwd);
+                    MessageDigest md5 = MessageDigest.getInstance("MD5");
+                    String newPasswordMD5 = Base64.getEncoder().encodeToString(md5.digest(newPwd.getBytes("utf-8")));
+                    changePassword(up, newPasswordMD5);
                     up.setResetCode(null);
                     userPasswordRepository.save(up);
                     return RestResult.ok(null);
