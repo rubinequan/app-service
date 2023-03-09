@@ -633,32 +633,33 @@ public class ServiceImpl implements Service {
                     throw new RuntimeException("创建目录异常");
                 }
             }
-            File targetFile = new File(dirFile + "\\" + name);
+            String url = dirFile + "\\" + name;
+            File targetFile = new File(url);
             FileUtils.writeByteArrayToFile(targetFile, file.getBytes());
             // 上传阿里云检测
             boolean scene = false;
             try {
-                scene = OssImgUtil.getScene(targetFile);
+                scene = OssImgUtil.getScene(targetFile, false);
                 if(scene){
                     return null;
                 }
-                FileUtils.writeByteArrayToFile(targetFile, file.getBytes());
             } catch (Exception e) {
                 //删除磁盘上的音视频
-                File oldFile = new File(dirFile + "\\" + name);
+                File oldFile = new File(url);
                 if(oldFile.exists()) {
                     oldFile.delete();
                 }
+                return null;
             } finally {
                 if (scene) {
                     //删除磁盘上的图片
-                    File oldFile = new File(dirFile + "\\" + name);
+                    File oldFile = new File(url);
                     if(oldFile.exists()) {
                         oldFile.delete();
                     }
                 }
             }
-            return dirFile + "\\" + name;
+            return url;
 
         }
         System.out.println("头像不是jpg和png格式");
@@ -1278,7 +1279,7 @@ public class ServiceImpl implements Service {
         File localFile = new File(userLogPath, userId + "_" + file.getOriginalFilename());
         try {
             if(file.getOriginalFilename().indexOf(".jpg") >= 0 || file.getOriginalFilename().indexOf(".png") >= 0){//图片审核
-                if(!OssImgUtil.getScene(multipartFileToFile(file))){
+                if(!OssImgUtil.getScene(multipartFileToFile(file), true)){
                     return RestResult.error(FILE_ILLEGALTY);
                 }
             }

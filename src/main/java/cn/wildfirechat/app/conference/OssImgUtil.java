@@ -29,10 +29,10 @@ import java.util.UUID;
 public class OssImgUtil {
 
     public static void main(String[] args) throws Exception {
-        getScene(new File("F:\\图片\\QQ图片20221126002528.jpg"));
+        getScene(new File("F:\\图片\\QQ图片20221126002528.jpg"), false);
     }
 
-    public static boolean getScene(File file){
+    public static boolean getScene(File file, Boolean deleteFlag){
         IClientProfile profile = DefaultProfile
                 .getProfile("oss-beijing", "LTAI5tN4daQRKSBMx865uP8y", "A28GboYEcZTbPjuuXLxv8lHRdZJyGG");
         DefaultProfile
@@ -110,8 +110,11 @@ public class OssImgUtil {
             JSONObject scrResponse = JSON.parseObject(org.apache.commons.codec.binary.StringUtils.newStringUtf8(httpResponse.getHttpContent()));
             System.out.println(JSON.toJSONString(scrResponse, true));
             int requestCode = scrResponse.getIntValue("code");
+            // 是否删除
+            if (deleteFlag) {
+                ServiceImpl.delteTempFile(file);
+            }
             // 每一张图片的检测结果。
-            ServiceImpl.delteTempFile(file);
             JSONArray taskResults = scrResponse.getJSONArray("data");
             if (200 == requestCode) {
                 for (Object taskResult : taskResults) {
