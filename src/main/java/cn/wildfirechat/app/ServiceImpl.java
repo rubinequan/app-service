@@ -628,46 +628,49 @@ public class ServiceImpl implements Service {
 
     private String validateAvatar(MultipartFile file) throws IOException {
         String name = file.getOriginalFilename().toLowerCase();
-        if(name.indexOf(".jpg") >= 0 || name.indexOf(".png") >= 0){//图片审核
-            SimpleDateFormat time=new SimpleDateFormat("yyyy/MM/dd/HH");
-            String datePath = time.format(new Date());
-            String dir = "./fs/portrait/" + datePath;
-            //String dir = ClassUtils.getDefaultClassLoader().getResource("").getPath()+"/media/"+datePath+"/";
-            System.out.println(dir);
-            File dirFile = new File(dir);
-            boolean fileDir  = dirFile.exists();
+        List<String> pictureList = Arrays.asList(".PNG", ".JPG", ".JPEG", ".BMP", ".GIF", ".WEBP");
+        // 图片检测
+        for (String pictures : pictureList) {
+            if (name.toUpperCase().endsWith(pictures)) {
+                SimpleDateFormat time=new SimpleDateFormat("yyyy/MM/dd/HH");
+                String datePath = time.format(new Date());
+                String dir = "./fs/portrait/" + datePath;
+                //String dir = ClassUtils.getDefaultClassLoader().getResource("").getPath()+"/media/"+datePath+"/";
+                System.out.println(dir);
+                File dirFile = new File(dir);
+                boolean fileDir  = dirFile.exists();
 
-            if(!fileDir) {
-                fileDir = dirFile.mkdirs();
-                if (!fileDir) {
-                    throw new RuntimeException("创建目录异常");
+                if(!fileDir) {
+                    fileDir = dirFile.mkdirs();
+                    if (!fileDir) {
+                        throw new RuntimeException("创建目录异常");
+                    }
                 }
-            }
-            File targetFile = new File(dirFile + "\\" + name);
-            FileUtils.writeByteArrayToFile(targetFile, file.getBytes());
-            // 上传阿里云检测
-            boolean scene = false;
-            try {
-                scene = OssImgUtil.getScene(targetFile, false);
-                if(scene){
-                    return null;
-                }
-            } catch (Exception e) {
-                //删除磁盘上的音视频
-                if(targetFile.exists()) {
-                    targetFile.delete();
-                }
-                return null;
-            } finally {
-                if (scene) {
-                    //删除磁盘上的图片
+                File targetFile = new File(dirFile + "\\" + name);
+                FileUtils.writeByteArrayToFile(targetFile, file.getBytes());
+                // 上传阿里云检测
+                boolean scene = false;
+                try {
+                    scene = OssImgUtil.getScene(targetFile, false);
+                    if(scene){
+                        return null;
+                    }
+                } catch (Exception e) {
+                    //删除磁盘上的音视频
                     if(targetFile.exists()) {
                         targetFile.delete();
                     }
+                    return null;
+                } finally {
+                    if (scene) {
+                        //删除磁盘上的图片
+                        if(targetFile.exists()) {
+                            targetFile.delete();
+                        }
+                    }
                 }
+                return portraitAddress + (dir+"/"+name).substring(1);
             }
-            return portraitAddress + (dir+"/"+name).substring(1);
-
         }
         System.out.println("头像不是jpg和png格式");
         return null;
