@@ -329,6 +329,13 @@ public class ServiceImpl implements Service {
             if (userResult.getErrorCode() == ErrorCode.ERROR_CODE_NOT_EXIST) {
                 return RestResult.error(USER_NOT_EXISTS);
             }
+            IMResult<OutputUserStatus> outputUserStatusIMResult = UserAdmin.checkUserBlockStatus(userResult.getResult().getUserId());
+            if(outputUserStatusIMResult.getErrorCode() != ErrorCode.ERROR_CODE_SUCCESS) {
+                return RestResult.error(ERROR_SERVER_ERROR);
+            }
+            if(outputUserStatusIMResult.getResult().getStatus() == 2) {
+                return RestResult.error(ERROR_USER_FORBIDDEN);
+            }
         }catch (Exception e){
             return RestResult.error(USER_NOT_EXISTS);
         }
@@ -378,7 +385,14 @@ public class ServiceImpl implements Service {
             if (userResult.getErrorCode() != ErrorCode.ERROR_CODE_SUCCESS) {
                 return RestResult.error(RestResult.RestCode.ERROR_SERVER_ERROR);
             }
-
+            //检查用户是否被封禁
+            IMResult<OutputUserStatus> outputUserStatusIMResult = UserAdmin.checkUserBlockStatus(userResult.getResult().getUserId());
+            if(outputUserStatusIMResult.getErrorCode() != ErrorCode.ERROR_CODE_SUCCESS) {
+                return RestResult.error(RestResult.RestCode.ERROR_SERVER_ERROR);
+            }
+            if(outputUserStatusIMResult.getResult().getStatus() == 2) {
+                return RestResult.error(ERROR_USER_FORBIDDEN);
+            }
             Optional<UserPassword> optional = userPasswordRepository.findById(userResult.getResult().getUserId());
             if (!optional.isPresent()) {
                 return RestResult.error(USER_NOT_EXISTS);
@@ -460,6 +474,8 @@ public class ServiceImpl implements Service {
             IMResult<InputOutputUserInfo> data=UserAdmin.getUserByUserId(response.getTid());
             if(data.getResult()!=null){
                 report.setTname(data.getResult().getName());
+                report.settDisplayName(data.getResult().getDisplayName());
+                report.settPhone(data.getResult().getMobile());
             }else{
                 return RestResult.error(RestResult.RestCode.BEIJUBAO_NO_EXISTS);
             }
@@ -467,6 +483,8 @@ public class ServiceImpl implements Service {
             IMResult<InputOutputUserInfo> result=UserAdmin.getUserByUserId(response.getUid());
             if(result.getResult()!=null){
                 report.setUname(result.getResult().getName());
+                report.setuDisplayName(result.getResult().getDisplayName());
+                report.setuPhone(result.getResult().getMobile());
             }else{
                 return RestResult.error(RestResult.RestCode.JUBAOREN_NO_EXISTS);
             }

@@ -13,14 +13,23 @@ public class Report {
 
     private String tname;
 
+    private String tDisplayName;
+
+    private String tPhone;
+
     private String uid;
 
     private String uname;
+
+    private String uDisplayName;
+
+    private String uPhone;
 
     private String content;
 
     private Integer status;
 
+    @Id
     private Date createTime;
 
     public String getTid() {
@@ -39,7 +48,6 @@ public class Report {
         this.tname = tname;
     }
 
-    @Id
     public String getUid() {
         return uid;
     }
@@ -78,5 +86,37 @@ public class Report {
 
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
+    }
+
+    public String gettDisplayName() {
+        return tDisplayName;
+    }
+
+    public void settDisplayName(String tDisplayName) {
+        this.tDisplayName = tDisplayName;
+    }
+
+    public String gettPhone() {
+        return tPhone;
+    }
+
+    public void settPhone(String tPhone) {
+        this.tPhone = tPhone;
+    }
+
+    public String getuDisplayName() {
+        return uDisplayName;
+    }
+
+    public void setuDisplayName(String uDisplayName) {
+        this.uDisplayName = uDisplayName;
+    }
+
+    public String getuPhone() {
+        return uPhone;
+    }
+
+    public void setuPhone(String uPhone) {
+        this.uPhone = uPhone;
     }
 }

@@ -53,6 +53,14 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public RestResult updateReport(Report report) {
         reportRepository.updateById(report.getStatus(),report.getTid());
+        try {
+            // 封禁/解封用户
+            if (report.getStatus() == 2 || report.getStatus() == 0) {
+                UserAdmin.updateUserBlockStatus(report.getTid(), report.getStatus());
+            }
+        } catch (Exception e) {
+            return RestResult.ok("封禁用户失败");
+        }
         return RestResult.ok("修改成功");
     }
 
